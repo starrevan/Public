@@ -28,6 +28,8 @@ for filename in Path(args.path).rglob('index.html'):
 
 # function to scrape the html files for the BGC cluster closest know cluster, cluster type and similarity to closest known.
 def scraper(filename):
+    df = pd.DataFrame(columns = ['scaffold','classification', 'type', 'start', 'stop', 'similar', 'similarity']) # generating the blank dataframe
+    # and added scaffold, start, and stop to df
     soup = BeautifulSoup(open(filename), 'html.parser') # reading in the html file
 
     with open("tmp/"+filename.stem+".txt", "w") as tmpfile: # opening a tmp file to save the converted html to text output
