@@ -1,6 +1,7 @@
 #!/miniconda/bin/python
 #created by R. Murphy at the SSEG-UCPH
 #edited by E. Starr
+
 from bs4 import BeautifulSoup
 import argparse
 from pathlib import Path
@@ -8,6 +9,7 @@ import os
 import re
 import pandas as pd
 from shutil import copy
+import numpy as np
 
 parser = argparse.ArgumentParser(description = ("html output into a csv format."))
 
@@ -57,17 +59,21 @@ def scraper(filename):
         for location in marker:
             counter = 0
             for i, line in enumerate(readfile[1:], 1):
-                if 'Region&nbsp' + location in line and counter < 1 and '%' in readfile[i + 6]: # looking at all line containing the region marker with a % 6 lines below them
+                if 'Region&nbsp' + location in line and counter < 1 and '%' in readfile[i + 6]: # looking at all line containing the region marker with a % 6 lines below them                   #problem if multiple BGC on same scaffold need to work out if there is a .what to do 
                     counter += 1 # since the text file is in duplicate for some reason to ensure our csv is not we have added a counter here to ensure only one per marker is read
                     df = df.append({'scaffold': readfile[i - 7].split(':')[1].strip().rstrip(")"), 'classification': 'predicted', 'type': readfile[i + 1].rstrip().strip(), 'start': readfile[i + 2].rstrip().strip(), 'stop': readfile[i + 3].rstrip().strip(), 'similar': readfile[i + 4].rstrip().strip(), 'similarity': readfile[i + 6].rstrip().strip()}, ignore_index = True)
                 #added in the scaffold and removed "original name was:" renaming, start and stop for the cluster)
                 elif 'Region&nbsp' + location in line and counter < 1 and '%' not in readfile[i + 6]:
-                    df = df.append({'scaffold': readfile[i - 7].split(':')[1].strip().rstrip(")"), 'classification': 'novel', 'type': readfile[i + 1].rstrip().strip(), 'start': readfile[i + 2].rstrip().strip(), 'stop': readfile[i + 3].rstrip().strip(),'similar': 'N/A', 'similarity': 'N/A'}, ignore_index = True)
-                #added in the scaffold and removed "original name was:" renaming, start and stop for the cluster)    
+                    #df = df.append({'scaffold': readfile[i - 7].strip().rstrip(")").split(':')[1], 'classification': 'novel', 'type': readfile[i + 1].rstrip().strip(), 'start': readfile[i + 2].rstrip().strip(), 'stop': readfile[i + 3].rstrip().strip()}, ignore_index = True)
+                    df = df.append({'scaffold': readfile[i - 7].strip(), 'classification': 'novel', 'type': readfile[i + 1].rstrip().strip(), 'start': readfile[i + 2].rstrip().strip(), 'stop': readfile[i + 3].rstrip().strip()}, ignore_index = True)
+
+                    df['scaffold'] = df['scaffold'].replace({'To': readfile[i - 11].strip()})
+            #got it working if only 2 clusters on a scaffold and will remove "original name was:" next.
                     counter += 1
+                 
         df.to_csv(args.path+"/csv/"+filename.stem+".csv", sep = ',', index = False) # saving the dataframe to a csv file
         infile.close()
-        os.remove("tmp/"+filename.stem+".txt") 
+        #os.remove("tmp/"+filename.stem+".txt") 
 
 def source(script, update=1):
     pipe = Popen(". %s; env" % script, stdout=PIPE, shell=True)
